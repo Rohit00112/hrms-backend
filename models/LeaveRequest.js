@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const softDeletePlugin = require('../plugins/softDelete');
 
 const leaveRequestSchema = new mongoose.Schema({
   employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
@@ -9,5 +10,8 @@ const leaveRequestSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }
 }, { timestamps: true });
+
+// Apply soft delete plugin
+leaveRequestSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model('LeaveRequest', leaveRequestSchema);
