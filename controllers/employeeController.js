@@ -42,9 +42,72 @@ const updateEmployee = async (req, res) => {
 
 const deleteEmployee = async (req, res) => {
   try {
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) return res.status(404).json({ message: 'Employee not found' });
+
+    // Soft delete the employee
+    const deletedBy = req.user?.userId || null; // Assuming middleware sets req.user
+    await employee.softDelete(deletedBy);
+
+    res.json({
+      message: 'Employee deleted successfully',
+      employee: {
+        id: employee._id,
+        name: `${employee.firstName} ${employee.lastName}`,
+        deletedAt: employee.deletedAt
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get all deleted employees
+const getDeletedEmployees = async (req, res) => {
+  try {
+    const deletedEmployees = await Employee.findDeleted().populate('userId departmentId deletedBy');
+    res.json(deletedEmployees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get all employees including deleted ones
+const getAllEmployeesWithDeleted = async (req, res) => {
+  try {
+    const employees = await Employee.findWithDeleted().populate('userId departmentId');
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Restore a soft deleted employee
+const restoreEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.restoreById(req.params.id);
+    if (!employee) return res.status(404).json({ message: 'Employee not found' });
+
+    res.json({
+      message: 'Employee restored successfully',
+      employee: {
+        id: employee._id,
+        name: `${employee.firstName} ${employee.lastName}`,
+        restoredAt: new Date()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Permanently delete an employee (hard delete)
+const permanentlyDeleteEmployee = async (req, res) => {
+  try {
     const employee = await Employee.findByIdAndDelete(req.params.id);
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
-    res.json({ message: 'Employee deleted successfully' });
+
+    res.json({ message: 'Employee permanently deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -55,5 +118,9 @@ module.exports = {
   getEmployeeById,
   createEmployee,
   updateEmployee,
-  deleteEmployee
+  deleteEmployee,
+  getDeletedEmployees,
+  getAllEmployeesWithDeleted,
+  restoreEmployee,
+  permanentlyDeleteEmployee
 };
