@@ -10,22 +10,27 @@ const {
   restoreEmployee,
   permanentlyDeleteEmployee
 } = require('../controllers/employeeController');
+const {
+  authenticateToken,
+  requireAdmin,
+  requireAdminOrManager
+} = require('../middleware/auth');
 
 const router = express.Router();
 
 // You can later add authentication middleware here
 
-// Basic CRUD operations
-router.get('/', getAllEmployees);             // GET /api/employees
-router.get('/:id', getEmployeeById);         // GET /api/employees/:id
-router.post('/', createEmployee);            // POST /api/employees
-router.put('/:id', updateEmployee);          // PUT /api/employees/:id
-router.delete('/:id', deleteEmployee);       // DELETE /api/employees/:id (soft delete)
+// Basic CRUD operations (require authentication)
+router.get('/', authenticateToken, getAllEmployees);             // GET /api/employees
+router.get('/:id', authenticateToken, getEmployeeById);         // GET /api/employees/:id
+router.post('/', authenticateToken, requireAdminOrManager, createEmployee);            // POST /api/employees
+router.put('/:id', authenticateToken, requireAdminOrManager, updateEmployee);          // PUT /api/employees/:id
+router.delete('/:id', authenticateToken, requireAdminOrManager, deleteEmployee);       // DELETE /api/employees/:id (soft delete)
 
-// Soft delete management routes
-router.get('/deleted/all', getDeletedEmployees);           // GET /api/employees/deleted/all
-router.get('/with-deleted/all', getAllEmployeesWithDeleted); // GET /api/employees/with-deleted/all
-router.put('/:id/restore', restoreEmployee);               // PUT /api/employees/:id/restore
-router.delete('/:id/permanent', permanentlyDeleteEmployee); // DELETE /api/employees/:id/permanent
+// Soft delete management routes (admin/manager only)
+router.get('/deleted/all', authenticateToken, requireAdminOrManager, getDeletedEmployees);           // GET /api/employees/deleted/all
+router.get('/with-deleted/all', authenticateToken, requireAdminOrManager, getAllEmployeesWithDeleted); // GET /api/employees/with-deleted/all
+router.put('/:id/restore', authenticateToken, requireAdminOrManager, restoreEmployee);               // PUT /api/employees/:id/restore
+router.delete('/:id/permanent', authenticateToken, requireAdmin, permanentlyDeleteEmployee); // DELETE /api/employees/:id/permanent
 
 module.exports = router;

@@ -13,25 +13,31 @@ const {
   getDeletedUsers,
   restoreUser
 } = require('../controllers/userController');
+const {
+  authenticateToken,
+  requireAdmin,
+  requireAdminOrManager,
+  requireOwnershipOrAdmin
+} = require('../middleware/auth');
 
 const router = express.Router();
 
-// User profile routes
-router.get('/me', getCurrentUser);                    // GET /api/users/me
-router.put('/me', updateCurrentUser);                 // PUT /api/users/me
+// User profile routes (require authentication)
+router.get('/me', authenticateToken, getCurrentUser);                    // GET /api/users/me
+router.put('/me', authenticateToken, updateCurrentUser);                 // PUT /api/users/me
 
-// Admin user management routes
-router.get('/', getAllUsers);                         // GET /api/users
-router.get('/deleted', getDeletedUsers);              // GET /api/users/deleted
-router.get('/role/:role', getUsersByRole);            // GET /api/users/role/:role
-router.get('/:id', getUserById);                      // GET /api/users/:id
-router.put('/:id', updateUser);                       // PUT /api/users/:id
-router.delete('/:id', deleteUser);                    // DELETE /api/users/:id (soft delete)
+// Admin user management routes (require admin access)
+router.get('/', authenticateToken, requireAdminOrManager, getAllUsers);                         // GET /api/users
+router.get('/deleted', authenticateToken, requireAdmin, getDeletedUsers);              // GET /api/users/deleted
+router.get('/role/:role', authenticateToken, requireAdminOrManager, getUsersByRole);            // GET /api/users/role/:role
+router.get('/:id', authenticateToken, requireOwnershipOrAdmin, getUserById);                      // GET /api/users/:id
+router.put('/:id', authenticateToken, requireOwnershipOrAdmin, updateUser);                       // PUT /api/users/:id
+router.delete('/:id', authenticateToken, requireAdmin, deleteUser);                    // DELETE /api/users/:id (soft delete)
 
-// User management operations
-router.put('/:id/toggle-status', toggleUserStatus);   // PUT /api/users/:id/toggle-status
-router.put('/:id/change-password', changeUserPassword); // PUT /api/users/:id/change-password
-router.put('/:id/temp-password', setTempPassword);    // PUT /api/users/:id/temp-password
-router.put('/:id/restore', restoreUser);              // PUT /api/users/:id/restore
+// User management operations (admin only)
+router.put('/:id/toggle-status', authenticateToken, requireAdmin, toggleUserStatus);   // PUT /api/users/:id/toggle-status
+router.put('/:id/change-password', authenticateToken, requireAdmin, changeUserPassword); // PUT /api/users/:id/change-password
+router.put('/:id/temp-password', authenticateToken, requireAdmin, setTempPassword);    // PUT /api/users/:id/temp-password
+router.put('/:id/restore', authenticateToken, requireAdmin, restoreUser);              // PUT /api/users/:id/restore
 
 module.exports = router;
