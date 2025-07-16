@@ -2,6 +2,9 @@ import express from 'express';
 import './config/database.js';
 import routes from './routes/index.js';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const port = 3001;
